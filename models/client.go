@@ -1,7 +1,7 @@
 package models
 
 import (
-	"log"
+	"fmt"
 	"sync"
 )
 
@@ -12,13 +12,10 @@ type Client struct {
 }
 
 type ClientStore interface {
-	Create(client Client) Client
+	Create(Client) error
+	Delete(id int) error
 	All() []Client
-	Get(id int) (Client, bool)
-	Update(id int, client Client) bool
-	Delete(id int) bool
 }
-
 type InMemoryClientStore struct {
 	data   map[int]Client
 	nextID int
@@ -32,21 +29,7 @@ func NewInMemoryClientStore() *InMemoryClientStore {
 	}
 }
 
-func (s *InMemoryClientStore) Create(client Client) Client {
-	log.Println("Server xxxxxxxxx")
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	client.ID = s.nextID
-	log.Println(client)
-
-	s.data[s.nextID] = client
-	s.nextID++
-	return client
-}
-
 func (s *InMemoryClientStore) All() []Client {
-	log.Println("Server ddddddddd")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	clients := []Client{}
@@ -56,30 +39,21 @@ func (s *InMemoryClientStore) All() []Client {
 	return clients
 }
 
-func (s *InMemoryClientStore) Get(id int) (Client, bool) {
+func (s *InMemoryClientStore) Create(client Client) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	c, ok := s.data[id]
-	return c, ok
+	client.ID = s.nextID
+	s.data[s.nextID] = client
+	s.nextID++
+	return nil
 }
 
-func (s *InMemoryClientStore) Update(id int, client Client) bool {
+func (s *InMemoryClientStore) Delete(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.data[id]; !exists {
-		return false
-	}
-	client.ID = id
-	s.data[id] = client
-	return true
-}
-
-func (s *InMemoryClientStore) Delete(id int) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if _, exists := s.data[id]; !exists {
-		return false
+		return fmt.Errorf("client with ID %d not found", id)
 	}
 	delete(s.data, id)
-	return true
+	return nil
 }

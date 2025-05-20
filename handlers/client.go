@@ -2,28 +2,37 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
-	"net/mail"
-	"strconv"
 
-	"go-client-app/models"
+	"go-client-app/services"
 )
 
 type ClientHandler struct {
-	store     models.ClientStore
+	service   *services.ClientService
 	templates *template.Template
 }
 
-func NewClientHandler(store models.ClientStore, tmpl *template.Template) *ClientHandler {
-	return &ClientHandler{store, tmpl}
+func NewClientHandler(service *services.ClientService, tmpl *template.Template) *ClientHandler {
+	return &ClientHandler{service, tmpl}
 }
 
 func (h *ClientHandler) List(w http.ResponseWriter, r *http.Request) {
-	h.templates.ExecuteTemplate(w, "index.html", h.store.All())
+	clients := h.service.ListClients()
+
+	w.Header().Set("Content-Type", "text/html")
+	if err := h.templates.ExecuteTemplate(w, "index.html", clients); err != nil {
+		log.Println("Template error:", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+	}
 }
 
 func (h *ClientHandler) ShowForm(w http.ResponseWriter, r *http.Request) {
-	h.templates.ExecuteTemplate(w, "form.html", nil)
+	w.Header().Set("Content-Type", "text/html")
+	if err := h.templates.ExecuteTemplate(w, "form.html", nil); err != nil {
+		log.Println("Template error:", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+	}
 }
 
 func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -35,28 +44,21 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	email := r.FormValue("email")
 
-	if name == "" || email == "" {
-		http.Error(w, "Name and email are required", http.StatusBadRequest)
+	if err := h.service.CreateClient(name, email); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if _, err := mail.ParseAddress(email); err != nil {
-		http.Error(w, "Invalid email format", http.StatusBadRequest)
-		return
-	}
-
-	h.store.Create(models.Client{Name: name, Email: email})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *ClientHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id <= 0 {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+	id := r.URL.Query().Get("id")
+
+	if err := h.service.DeleteClientByID(id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	h.store.Delete(id)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
