@@ -4,7 +4,7 @@ A simple web application built with Go that allows users to create, list, and de
 
 ---
 
-## 🚀 Features
+## Features
 
 - Add a client with name and email.
 - Delete a client by ID.
@@ -34,7 +34,7 @@ go-client-app/
 ```
 ---
 
-## 🏃 How to Run
+## How to Run
 
 1. **Clone the Repository**
 
