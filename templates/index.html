@@ -1,0 +1,17 @@
+{{ define "index.html" }}
+Add New Clien
+    {{ template "base.html" . }}
+{{ end }}
+
+{{ define "content" }}
+    <a href="/new">Add New Client</a>
+    <ul>
+    {{ range . }}
+        <li>{{ .Name }} ({{ .Email }}) 
+            <a href="/delete?id={{ .ID }}">Delete</a>
+        </li>
+    {{ else }}
+        <li>No clients yet</li>
+    {{ end }}
+    </ul>
+{{ end }}

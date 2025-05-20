@@ -1,0 +1,11 @@
+{{ define "form.html" }}
+    {{ template "base.html" . }}
+{{ end }}
+
+{{ define "content" }}
+<form method="POST" action="/create">
+    <label>Name: <input type="text" name="name" required></label><br>
+    <label>Email: <input type="email" name="email" required></label><br>
+    <button type="submit">Create Client</button>
+</form>
+{{ end }}
